@@ -1,5 +1,6 @@
 services:
   minimail:
+    container_name: "minimail"
     build: .
     ports:
       - "3000:3000"
