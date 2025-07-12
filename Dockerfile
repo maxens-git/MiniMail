@@ -6,12 +6,12 @@ COPY . .
 
 RUN npm install
 
-WORKDIR /app/frontend
+WORKDIR /app/web
 RUN npm install && npm run build
 
 WORKDIR /app
 
-RUN mkdir -p public && cp -r frontend/build/* public/
+RUN mkdir -p public && cp -r web/build/* public/
 
 EXPOSE 3000 2525
 
