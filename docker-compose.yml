@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  minimail:
+    build: .
+    container_name: minimail
+    ports:
+      - "3000:3000"
+      - "25:2525"
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=production
