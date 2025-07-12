@@ -2,16 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY . .
-
+COPY package*.json ./
+COPY inboxStore.js index.js ./
 RUN npm install
 
+COPY web ./web
 WORKDIR /app/web
 RUN npm install && npm run build
 
 WORKDIR /app
-
-RUN mkdir -p public && cp -r web/build/* public/
 
 EXPOSE 3000 2525
 
