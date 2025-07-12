@@ -51,7 +51,7 @@ const smtp = new SMTPServer({
   },
 });
 
-smtp.listen(2525, () => console.log('SMTP listening on port 2525'));
+smtp.listen(25, () => console.log('SMTP listening on port 25'));
 
 app.use(handler);
 
