@@ -4,5 +4,3 @@ services:
     ports:
       - "3000:3000"
       - "2525:2525"
-    volumes:
-      - ./data:/data
