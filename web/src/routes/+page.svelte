@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { RefreshCcw, ClipboardCopy, ClipboardCheck, Shuffle, Mail } from 'lucide-svelte';
+	import { Modal } from '@skeletonlabs/skeleton-svelte';
 
 	type Mail = {
 		subject: string;
@@ -10,6 +11,9 @@
 		html?: string;
 		date?: string;
 	};
+
+	let selectedMail: Mail | null = null;
+	let openModal = false;
 
 	let domain = 'maxens.org';
 	let selectedDomain = '';
@@ -22,6 +26,17 @@
 	let domains: string[] = [];
 
 	$: fullAddress = `${inbox}@${selectedDomain}`;
+
+	async function openMail(index: number) {
+		try {
+			const res = await fetch(`/api/mails/${inbox}/${index}`);
+			const data = await res.json();
+			selectedMail = data;
+			openModal = true;
+		} catch (e) {
+			console.error('Failed to load mail:', e);
+		}
+	}
 
 	if (browser) {
 		const stored = localStorage.getItem('inbox');
@@ -124,7 +139,7 @@
 				<Shuffle size={16} />
 			</button>
 		</div>
-		<button type="button" class="btn btn-sm preset-outlined" on:click={fetchMails}>
+		<button type="button" class="btn btn-sm preset-outlined mt-2" on:click={fetchMails}>
 			<RefreshCcw size={16} />
 		</button>
 	</div>
@@ -144,12 +159,14 @@
 				{:else if mails.length === 0}
 					<tr><td colspan="3">No emails received for <strong>{fullAddress}</strong>.</td></tr>
 				{:else}
-					{#each mails as mail}
+					{#each mails as mail, index}
 						<tr>
 							<td>{mail.subject || '(No subject)'}</td>
 							<td>{mail.from}</td>
 							<td class="text-right">
-								<a class="btn btn-sm preset-filled" href="/api">View &rarr;</a>
+								<button class="btn btn-sm preset-filled" on:click={() => openMail(index)}>
+									View →
+								</button>
 							</td>
 						</tr>
 					{/each}
@@ -157,4 +174,34 @@
 			</tbody>
 		</table>
 	</div>
+
+	<!-- MODAL POUR AFFICHAGE DU MAIL -->
+	<Modal
+		open={openModal}
+		onOpenChange={(e) => (openModal = e.open)}
+		contentBase="card bg-surface-100-900 p-6 space-y-4 shadow-xl max-w-screen-md"
+		backdropClasses="backdrop-blur-sm"
+	>
+		{#snippet content()}
+			{#if selectedMail}
+				<header>
+					<h2 class="h2 mb-2">{selectedMail.subject || '(No subject)'}</h2>
+					<p class="text-sm text-muted"><strong>From:</strong> {selectedMail.from}</p>
+					<p class="text-sm text-muted"><strong>Date:</strong> {selectedMail.date}</p>
+				</header>
+
+				<article class="prose max-w-full">
+					{#if selectedMail.html}
+						<div>{@html selectedMail.html}</div>
+					{:else}
+						<pre class="bg-gray-100 p-4 rounded whitespace-pre-wrap">{selectedMail.text}</pre>
+					{/if}
+				</article>
+
+				<footer class="flex justify-end pt-4">
+					<button class="btn preset-tonal" on:click={() => (openModal = false)}>Close</button>
+				</footer>
+			{/if}
+		{/snippet}
+	</Modal>
 </div>
