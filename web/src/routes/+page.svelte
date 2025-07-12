@@ -27,23 +27,6 @@
 
 	$: fullAddress = `${inbox}@${selectedDomain}`;
 
-	async function openMail(index: number) {
-		try {
-			const res = await fetch(`/api/mails/${inbox}/${index}`);
-			const data = await res.json();
-			selectedMail = data;
-			openModal = true;
-		} catch (e) {
-			console.error('Failed to load mail:', e);
-		}
-	}
-
-	if (browser) {
-		const stored = localStorage.getItem('inbox');
-		inbox = stored ?? generateInbox();
-		localStorage.setItem('inbox', inbox);
-	}
-
 	function generateInbox(): string {
 		return Math.random().toString(36).substring(2, 10);
 	}
@@ -68,6 +51,17 @@
 		}
 	}
 
+	async function openMail(index: number) {
+		try {
+			const res = await fetch(`/api/mails/${inbox}/${index}`);
+			const data = await res.json();
+			selectedMail = data;
+			openModal = true;
+		} catch (e) {
+			console.error('Failed to load mail:', e);
+		}
+	}
+
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(fullAddress);
@@ -80,6 +74,10 @@
 
 	onMount(async () => {
 		if (browser) {
+			const stored = localStorage.getItem('inbox');
+			inbox = stored ?? generateInbox();
+			localStorage.setItem('inbox', inbox);
+
 			try {
 				const res = await fetch('/api/domains');
 				domains = await res.json();
@@ -89,7 +87,7 @@
 				return;
 			}
 
-			fetchMails();
+			await fetchMails();
 		}
 	});
 </script>
@@ -99,7 +97,6 @@
 		max-width: 800px;
 		margin: auto;
 		padding: 2rem;
-		font-family: sans-serif;
 	}
 </style>
 
@@ -109,61 +106,57 @@
 		MiniMail
 	</h1>
 
-	<div class="card p-4 preset-outlined-surface-500">
-		<div style="display: flex; flex-direction: row; gap: 0.5rem;">
-			<input class="input" readonly value={inbox} />
-			<span style="display: flex; align-items: center;">@</span>
-			<label class="label">
-				<select class="select" bind:value={selectedDomain}>
+	<div class="card p-6 preset-outlined-surface-500 space-y-4">
+		<div class="flex flex-wrap items-center gap-2">
+			<span class="font-medium">Your email:</span>
+			<div class="flex items-center gap-2">
+				<input class="input w-32" readonly value={inbox} />
+				<span class="text-gray-500">@</span>
+				<select class="select w-40" bind:value={selectedDomain}>
 					{#each domains as domain}
 						<option value={domain}>{domain}</option>
 					{/each}
 				</select>
-			</label>
-			<button
-				type="button"
-				class="btn btn-sm icon preset-outlined"
-				on:click={copyToClipboard}
-				aria-label="Copy address">
-				{#if copied}
-					<ClipboardCheck size={16} />
-				{:else}
-					<ClipboardCopy size={16} />
-				{/if}
-			</button>
-			<button
-				type="button"
-				class="btn btn-sm icon preset-outlined"
-				on:click={regenerateInbox}
-				aria-label="Generate new address">
-				<Shuffle size={16} />
-			</button>
+			</div>
+			<div class="flex gap-2">
+				<button class="btn btn-sm icon preset-outlined" on:click={copyToClipboard} aria-label="Copy address">
+					{#if copied}
+						<ClipboardCheck size={16} />
+					{:else}
+						<ClipboardCopy size={16} />
+					{/if}
+				</button>
+				<button class="btn btn-sm icon preset-outlined" on:click={regenerateInbox} aria-label="New address">
+					<Shuffle size={16} />
+				</button>
+				<button class="btn btn-sm icon preset-outlined" on:click={fetchMails} aria-label="Refresh inbox">
+					<RefreshCcw size={16} />
+				</button>
+			</div>
 		</div>
-		<button type="button" class="btn btn-sm preset-outlined mt-2" on:click={fetchMails}>
-			<RefreshCcw size={16} />
-		</button>
 	</div>
 
-	<div class="table-wrap card mt-5 p-5 preset-outlined-surface-500">
-		<table class="table caption-bottom">
+	<div class="card mt-6 p-6 preset-outlined-surface-500">
+		<h2 class="text-lg font-semibold mb-4">Inbox</h2>
+		<table class="table w-full">
 			<thead>
-				<tr>
-					<th>Subject</th>
-					<th>Sender</th>
-					<th></th>
+				<tr class="text-left border-b border-gray-300">
+					<th class="py-2">Subject</th>
+					<th class="py-2">Sender</th>
+					<th class="py-2 text-right">Action</th>
 				</tr>
 			</thead>
-			<tbody class="[&>tr]:hover:preset-tonal-primary">
+			<tbody>
 				{#if loading}
-					<tr><td colspan="3">Loading mails...</td></tr>
+					<tr><td colspan="3" class="py-4 text-center">Loading mails...</td></tr>
 				{:else if mails.length === 0}
-					<tr><td colspan="3">No emails received for <strong>{fullAddress}</strong>.</td></tr>
+					<tr><td colspan="3" class="py-4 text-center">No emails received for <strong>{fullAddress}</strong>.</td></tr>
 				{:else}
 					{#each mails as mail, index}
-						<tr>
-							<td>{mail.subject || '(No subject)'}</td>
-							<td>{mail.from}</td>
-							<td class="text-right">
+						<tr class="hover:bg-muted-100">
+							<td class="py-2">{mail.subject || '(No subject)'}</td>
+							<td class="py-2">{mail.from}</td>
+							<td class="py-2 text-right">
 								<button class="btn btn-sm preset-filled" on:click={() => openMail(index)}>
 									View →
 								</button>
@@ -175,7 +168,6 @@
 		</table>
 	</div>
 
-	<!-- MODAL POUR AFFICHAGE DU MAIL -->
 	<Modal
 		open={openModal}
 		onOpenChange={(e) => (openModal = e.open)}
@@ -184,13 +176,13 @@
 	>
 		{#snippet content()}
 			{#if selectedMail}
-				<header>
-					<h2 class="h2 mb-2">{selectedMail.subject || '(No subject)'}</h2>
+				<header class="space-y-1 border-b border-muted-200 pb-2">
+					<h2 class="text-xl font-bold">{selectedMail.subject || '(No subject)'}</h2>
 					<p class="text-sm text-muted"><strong>From:</strong> {selectedMail.from}</p>
 					<p class="text-sm text-muted"><strong>Date:</strong> {selectedMail.date}</p>
 				</header>
 
-				<article class="prose max-w-full">
+				<article class="prose prose-sm max-w-full">
 					{#if selectedMail.html}
 						<div>{@html selectedMail.html}</div>
 					{:else}
