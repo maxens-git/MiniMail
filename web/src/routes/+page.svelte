@@ -186,7 +186,7 @@
 					<p class="text-sm text-muted"><strong>Date:</strong> {selectedMail.date}</p>
 				</header>
 
-				<article class="prose prose-sm max-w-full overflow-auto">
+				<article class="prose prose-sm max-w-full overflow-auto h-75">
 					{#if selectedMail.html}
 						<div>{@html selectedMail.html}</div>
 					{:else}
