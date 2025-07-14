@@ -3,7 +3,8 @@
 	import { browser } from '$app/environment';
 	import { RefreshCcw, ClipboardCopy, ClipboardCheck, Shuffle, Mail } from 'lucide-svelte';
 	import { Modal } from '@skeletonlabs/skeleton-svelte';
-
+	import DOMPurify from 'dompurify';
+	
 	type Mail = {
 		subject: string;
 		from: string;
@@ -55,6 +56,9 @@
 		try {
 			const res = await fetch(`/api/mails/${inbox}/${index}`);
 			const data = await res.json();
+			if (data.html) {
+				data.html = DOMPurify.sanitize(data.html);
+			}
 			selectedMail = data;
 			openModal = true;
 		} catch (e) {
@@ -182,7 +186,7 @@
 					<p class="text-sm text-muted"><strong>Date:</strong> {selectedMail.date}</p>
 				</header>
 
-				<article class="prose prose-sm max-w-full">
+				<article class="prose prose-sm max-w-full overflow-auto">
 					{#if selectedMail.html}
 						<div>{@html selectedMail.html}</div>
 					{:else}
