@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { addMail, getMails, getMailByIndex } from './inboxStore.js';
 import { handler } from './web/build/handler.js';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -42,9 +43,11 @@ app.get('/api/domains', (_, res) => {
 
 const smtp = new SMTPServer({
   logger: true,
-  secure: true,
-  key: fs.readFileSync('/certs/cert.key'),
-  cert: fs.readFileSync('/certs/cert.crt'),
+  secure: false,
+  tls: {
+    key: fs.readFileSync('/certs/cert.key'),
+    cert: fs.readFileSync('/certs/fullchain.crt')
+  },
   disabledCommands: ['AUTH'],
   onData(stream, session, callback) {
     simpleParser(stream)
