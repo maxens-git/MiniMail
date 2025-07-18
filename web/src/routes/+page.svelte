@@ -16,7 +16,7 @@
 	let selectedMail: Mail | null = null;
 	let openModal = false;
 
-	let domain = 'maxens.org';
+	let domain = '';
 	let selectedDomain = '';
 	let inbox = generateInbox();
 
