@@ -44,10 +44,6 @@ app.get('/api/domains', (_, res) => {
 const smtp = new SMTPServer({
   logger: true,
   secure: false,
-  tls: {
-    key: fs.readFileSync('/certs/cert.key'),
-    cert: fs.readFileSync('/certs/fullchain.crt')
-  },
   disabledCommands: ['AUTH'],
   onData(stream, session, callback) {
     simpleParser(stream)
